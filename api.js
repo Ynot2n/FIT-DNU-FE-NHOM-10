@@ -1,4 +1,4 @@
-const BASE_URL = "https.mmm";
+const BASE_URL = "https.m";
 function getProducts() {
   return fetch(`${BASE_URL}/products`).then((res) => res.json());
 }
