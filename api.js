@@ -1,4 +1,4 @@
-const BASE_URL = "https://6a05692baa826ca75c09c73a.mockapi.io/products";
+const BASE_URL = "https.mmm";
 function getProducts() {
   return fetch(`${BASE_URL}/products`).then((res) => res.json());
 }
