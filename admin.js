@@ -42,6 +42,10 @@ async function handleEdit() {
   const id = $(this).data("id");
   const products = await getProducts();
   const product = products.find((p) => p.id == id);
+  if (!product) {
+    showToast("Product not found");
+    return;
+  }
   editId = id;
   $("#name").val(product.name);
   $("#price").val(product.price);
