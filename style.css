@@ -1,0 +1,47 @@
+body {
+  background: #f4f7fb;
+  font-family: Arial, sans-serif;
+}
+.hero-section {
+  height: 400px;
+  background: url("https://images.unsplash.com/photo-1519389950473-47ba0277781c")
+    center/cover;
+  position: relative;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.card {
+  border: none;
+  transition: 0.3s;
+}
+.card:hover {
+  transform: translateY(-8px);
+}
+.product-img {
+  height: 230px;
+  object-fit: cover;
+}
+.compare-check {
+  transform: scale(1.2);
+}
+.error {
+  color: red;
+  font-size: 14px;
+}
+.table img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+.toast {
+  z-index: 9999;
+}

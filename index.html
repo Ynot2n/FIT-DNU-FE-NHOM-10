@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GadgetStore</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#"> GadgetStore </a>
+        <button
+          class="navbar-toggler"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+          <input
+            type="text"
+            class="form-control ms-lg-3 my-3 my-lg-0"
+            id="searchInput"
+            placeholder="Search products..."
+          />
+          <select id="categoryFilter" class="form-select ms-lg-3">
+            <option value="all">All Categories</option>
+          </select>
+          <a href="./admin.html" class="btn btn-warning ms-lg-3"> Admin </a>
+        </div>
+      </div>
+    </nav>
+    <section class="hero-section text-center text-white">
+      <div class="overlay"></div>
+      <div class="hero-content">
+        <h1 class="display-4 fw-bold">Welcome to GadgetStore</h1>
+        <p class="lead">Compare the best gadgets easily</p>
+      </div>
+    </section>
+    <div class="container py-5">
+      <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
+      <div class="row g-4" id="productList"></div>
+    </div>
+    <!-- MODAL -->
+    <div class="modal fade" id="productModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Product Detail</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="modalBody"></div>
+        </div>
+      </div>
+    </div>
+    <!-- TOAST -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="mainToast" class="toast">
+        <div class="toast-header">
+          <strong class="me-auto"> GadgetStore </strong>
+          <button class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastText"></div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/main.js"></script>
+  </body>
+</html>
