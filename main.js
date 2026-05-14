@@ -36,15 +36,16 @@ function renderProducts(data) {
               <input
                 class="form-check-input compare-check"
                 type="checkbox"
-                onchange='toggleCompare(${JSON.stringify(product)})'
+                data-product-id="${product.id}"
               >
               <label class="form-check-label">
                 Compare
               </label>
             </div>
             <button
-              class="btn btn-dark mt-auto"
-              onclick="showDetail('${product.id}')">
+              class="btn btn-dark mt-auto detail-btn"
+              type="button"
+              data-product-id="${product.id}">
               View Detail
             </button>
           </div>
@@ -52,9 +53,22 @@ function renderProducts(data) {
       </div>
     `;
   });
+  updateCompareButton();
 }
+
+$(document).on("change", ".compare-check", function () {
+  const id = $(this).data("product-id");
+  const checked = $(this).is(":checked");
+  toggleCompare(id, checked, this);
+});
+
+$(document).on("click", ".detail-btn", function () {
+  showDetail($(this).data("product-id"));
+});
+
 function renderCategories() {
   const categories = [...new Set(products.map((p) => p.category))];
+  $("#categoryFilter").html(`<option value="all">All Categories</option>`);
   categories.forEach((category) => {
     $("#categoryFilter").append(`
       <option value="${category}">
@@ -63,6 +77,18 @@ function renderCategories() {
     `);
   });
 }
+
+function updateCompareButton() {
+  $("#compareBtn").prop("disabled", compareList.length !== 2);
+}
+
+$("#compareBtn").on("click", function () {
+  if (compareList.length === 2) {
+    renderCompare();
+  } else {
+    showToast("Select 2 products to compare");
+  }
+});
 $("#searchInput").on("input", function () {
   const keyword = $(this).val().toLowerCase();
   const filtered = products.filter((product) =>
@@ -81,6 +107,10 @@ $("#categoryFilter").on("change", function () {
 });
 function showDetail(id) {
   const product = products.find((p) => p.id == id);
+  if (!product) {
+    showToast("Product not found");
+    return;
+  }
   $("#modalBody").html(`
     <img
       src="${product.image}"
@@ -95,15 +125,24 @@ function showDetail(id) {
   const modal = new bootstrap.Modal(document.getElementById("productModal"));
   modal.show();
 }
-function toggleCompare(product) {
-  if (compareList.length >= 2) {
-    showToast("Only 2 products allowed");
-    return;
+function toggleCompare(id, checked, checkbox) {
+  const product = products.find((p) => p.id == id);
+  if (!product) return;
+  if (checked) {
+    if (compareList.some((p) => p.id == id)) return;
+    if (compareList.length >= 2) {
+      showToast("Only 2 products allowed");
+      if (checkbox) checkbox.checked = false;
+      return;
+    }
+    compareList.push(product);
+    if (compareList.length === 2) {
+      renderCompare();
+    }
+  } else {
+    compareList = compareList.filter((p) => p.id != id);
   }
-  compareList.push(product);
-  if (compareList.length === 2) {
-    renderCompare();
-  }
+  updateCompareButton();
 }
 function renderCompare() {
   $("#modalBody").html(`
