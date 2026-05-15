@@ -1,174 +1,150 @@
-const productList = document.getElementById("productList");
-const loading = document.getElementById("loading");
-let products = [];
-let compareList = [];
-async function loadProducts() {
+import { getProducts, getReviews } from "./api.js";
+import { formatPrice, renderStars } from "./utils.js";
+
+let allProducts = [];
+let selectedForCompare = [];
+
+$(document).ready(async () => {
   try {
-    $("#loading").fadeIn();
-    products = await getProducts();
-    renderProducts(products);
-    renderCategories();
-  } catch (error) {
-    alert("Failed to load products");
-  } finally {
-    $("#loading").fadeOut();
+    allProducts = await getProducts();
+    renderProducts(allProducts);
+  } catch (err) {
+    console.error("Lỗi tải sản phẩm:", err);
+    $("#productList").html(
+      '<div class="alert alert-danger">Lỗi tải sản phẩm. Vui lòng thử lại sau.</div>',
+    );
   }
-}
-function renderProducts(data) {
-  productList.innerHTML = "";
-  data.forEach((product) => {
-    productList.innerHTML += `
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card shadow h-100">
-          <img
-            src="${product.image}"
-            class="card-img-top product-img"
-          >
-          <div class="card-body d-flex flex-column">
-            <span class="badge bg-primary mb-2">
-              ${product.category}
-            </span>
-            <h5>${product.name}</h5>
-            <p class="text-danger fw-bold">
-              ${formatPrice(product.price)}
-            </p>
-            <div class="form-check mb-3">
-              <input
-                class="form-check-input compare-check"
-                type="checkbox"
-                data-product-id="${product.id}"
-              >
-              <label class="form-check-label">
-                Compare
-              </label>
-            </div>
-            <button
-              class="btn btn-dark mt-auto detail-btn"
-              type="button"
-              data-product-id="${product.id}">
-              View Detail
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
+
+  // Search + Filter
+  $("#searchInput").on("input", filterProducts);
+  $("#categoryFilter").on("change", filterProducts);
+
+  // Click card → xem chi tiết
+  $(document).on("click", ".product-card", function (e) {
+    if ($(e.target).is("input[type=checkbox]")) return;
+    showProductDetail($(this).data("id"));
   });
-  updateCompareButton();
-}
 
-$(document).on("change", ".compare-check", function () {
-  const id = $(this).data("product-id");
-  const checked = $(this).is(":checked");
-  toggleCompare(id, checked, this);
-});
-
-$(document).on("click", ".detail-btn", function () {
-  showDetail($(this).data("product-id"));
-});
-
-function renderCategories() {
-  const categories = [...new Set(products.map((p) => p.category))];
-  $("#categoryFilter").html(`<option value="all">All Categories</option>`);
-  categories.forEach((category) => {
-    $("#categoryFilter").append(`
-      <option value="${category}">
-        ${category}
-      </option>
-    `);
+  // Checkbox compare
+  $(document).on("change", ".compare-checkbox", function () {
+    const id = $(this).data("id");
+    if (this.checked) {
+      if (selectedForCompare.length >= 2) {
+        this.checked = false;
+        alert("Chỉ được so sánh tối đa 2 sản phẩm!");
+        return;
+      }
+      selectedForCompare.push(allProducts.find((p) => p.id === id));
+    } else {
+      selectedForCompare = selectedForCompare.filter((p) => p.id !== id);
+    }
+    $("#compareCount").text(selectedForCompare.length);
   });
-}
 
-function updateCompareButton() {
-  $("#compareBtn").prop("disabled", compareList.length !== 2);
-}
-
-$("#compareBtn").on("click", function () {
-  if (compareList.length === 2) {
-    renderCompare();
-  } else {
-    showToast("Select 2 products to compare");
-  }
-});
-$("#searchInput").on("input", function () {
-  const keyword = $(this).val().toLowerCase();
-  const filtered = products.filter((product) =>
-    product.name.toLowerCase().includes(keyword),
-  );
-  renderProducts(filtered);
-});
-$("#categoryFilter").on("change", function () {
-  const value = $(this).val();
-  if (value === "all") {
-    renderProducts(products);
-    return;
-  }
-  const filtered = products.filter((product) => product.category === value);
-  renderProducts(filtered);
-});
-function showDetail(id) {
-  const product = products.find((p) => p.id == id);
-  if (!product) {
-    showToast("Product not found");
-    return;
-  }
-  $("#modalBody").html(`
-    <img
-      src="${product.image}"
-      class="img-fluid rounded mb-3"
-    >
-    <h2>${product.name}</h2>
-    <p>${product.description}</p>
-    <h4 class="text-danger">
-      ${formatPrice(product.price)}
-    </h4>
-  `);
-  const modal = new bootstrap.Modal(document.getElementById("productModal"));
-  modal.show();
-}
-function toggleCompare(id, checked, checkbox) {
-  const product = products.find((p) => p.id == id);
-  if (!product) return;
-  if (checked) {
-    if (compareList.some((p) => p.id == id)) return;
-    if (compareList.length >= 2) {
-      showToast("Only 2 products allowed");
-      if (checkbox) checkbox.checked = false;
+  // Nút So sánh
+  $("#btnCompare").click(() => {
+    if (selectedForCompare.length !== 2) {
+      alert("Vui lòng chọn đúng 2 sản phẩm để so sánh!");
       return;
     }
-    compareList.push(product);
-    if (compareList.length === 2) {
-      renderCompare();
-    }
-  } else {
-    compareList = compareList.filter((p) => p.id != id);
+    renderComparisonTable();
+    $("#compareModal").modal("show");
+  });
+});
+
+function renderProducts(products) {
+  const container = $("#productList");
+  container.html("");
+  products.forEach((p) => {
+    const card = `
+      <div class="col-md-4 col-lg-3 mb-4">
+        <div class="card h-100 product-card shadow-sm" data-id="${p.id}">
+          <img src="${p.image}" class="card-img-top" style="height:200px;object-fit:cover">
+          <div class="card-body">
+            <h6 class="card-title">${p.name}</h6>
+            <p class="text-primary fw-bold">${formatPrice(p.price)}</p>
+            <span class="badge bg-secondary">${p.category}</span>
+            <div class="mt-2">
+              <input type="checkbox" class="compare-checkbox form-check-input" data-id="${p.id}">
+              <label class="form-check-label ms-1">So sánh</label>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    container.append(card);
+  });
+}
+
+function filterProducts() {
+  const term = $("#searchInput").val().toLowerCase();
+  const cat = $("#categoryFilter").val();
+  const filtered = allProducts.filter((p) => {
+    const matchName = p.name.toLowerCase().includes(term);
+    const matchCat = !cat || p.category === cat;
+    return matchName && matchCat;
+  });
+  renderProducts(filtered);
+}
+
+async function showProductDetail(id) {
+  const product = allProducts.find((p) => p.id === id);
+  let reviews = [];
+  try {
+    reviews = await getReviews(id);
+  } catch (err) {
+    console.error("Lỗi tải đánh giá:", err);
   }
-  updateCompareButton();
+
+  $("#modalProductName").text(product.name);
+  $("#modalImage").attr("src", product.image);
+  $("#modalPrice").html(`<strong>${formatPrice(product.price)}</strong>`);
+  $("#modalDescription").text(product.description);
+
+  const specsHTML = `
+    <ul class="list-group">
+      <li class="list-group-item"><strong>Thương hiệu:</strong> ${product.brand}</li>
+      <li class="list-group-item"><strong>Màn hình:</strong> ${product.screen}</li>
+      <li class="list-group-item"><strong>RAM:</strong> ${product.ram}</li>
+      <li class="list-group-item"><strong>Bộ nhớ:</strong> ${product.storage}</li>
+    </ul>`;
+  $("#modalSpecs").html(specsHTML);
+
+  // Render reviews
+  let reviewHTML = "";
+  reviews.forEach((r) => {
+    reviewHTML += `
+      <div class="border-bottom pb-2 mb-2">
+        <div class="d-flex justify-content-between">
+          <strong>${r.reviewer}</strong>
+          ${renderStars(r.rating)}
+        </div>
+        <p class="mb-0">${r.comment}</p>
+      </div>`;
+  });
+  $("#reviewList").html(reviewHTML || "<p>Chưa có đánh giá nào.</p>");
+
+  new bootstrap.Modal($("#detailModal")[0]).show();
 }
-function renderCompare() {
-  $("#modalBody").html(`
+
+// ====================== SO SÁNH BẰNG DOM MANIPULATION ======================
+function renderComparisonTable() {
+  const [p1, p2] = selectedForCompare;
+  const table = `
     <table class="table table-bordered">
-      <tr>
-        <th>Property</th>
-        <th>${compareList[0].name}</th>
-        <th>${compareList[1].name}</th>
-      </tr>
-      <tr>
-        <th>Price</th>
-        <td>
-          ${formatPrice(compareList[0].price)}
-        </td>
-        <td>
-          ${formatPrice(compareList[1].price)}
-        </td>
-      </tr>
-      <tr>
-        <th>Category</th>
-        <td>${compareList[0].category}</td>
-        <td>${compareList[1].category}</td>
-      </tr>
-    </table>
-  `);
-  const modal = new bootstrap.Modal(document.getElementById("productModal"));
-  modal.show();
+      <thead>
+        <tr>
+          <th>Thuộc tính</th>
+          <th>${p1.name}</th>
+          <th>${p2.name}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Giá</td><td>${formatPrice(p1.price)}</td><td>${formatPrice(p2.price)}</td></tr>
+        <tr><td>Thương hiệu</td><td>${p1.brand}</td><td>${p2.brand}</td></tr>
+        <tr><td>Màn hình</td><td>${p1.screen}</td><td>${p2.screen}</td></tr>
+        <tr><td>RAM</td><td>${p1.ram}</td><td>${p2.ram}</td></tr>
+        <tr><td>Bộ nhớ</td><td>${p1.storage}</td><td>${p2.storage}</td></tr>
+      </tbody>
+    </table>`;
+  $("#compareTable").html(table);
 }
-loadProducts();
