@@ -1,87 +1,109 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GadgetStore</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GadgetStore - Điện thoại, Laptop & Phụ kiện</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
       <div class="container">
-        <a class="navbar-brand fw-bold" href="#"> GadgetStore </a>
-        <button
-          class="navbar-toggler"
-          data-bs-toggle="collapse"
-          data-bs-target="#navMenu"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navMenu">
+        <a class="navbar-brand fw-bold fs-3" href="#">GadgetStore</a>
+        <form class="d-flex me-auto flex-grow-1 mx-3" id="searchForm">
           <input
-            type="text"
-            class="form-control ms-lg-3 my-3 my-lg-0"
+            class="form-control me-2"
             id="searchInput"
-            placeholder="Search products..."
+            type="search"
+            placeholder="Tìm kiếm sản phẩm..."
           />
-          <select id="categoryFilter" class="form-select ms-lg-3">
-            <option value="all">All Categories</option>
-          </select>
-          <button
-            id="compareBtn"
-            type="button"
-            class="btn btn-success ms-lg-3"
-            disabled
-          >
-            Compare selected
-          </button>
-          <a href="./admin.html" class="btn btn-warning ms-lg-3"> Admin </a>
-        </div>
+        </form>
+        <select class="form-select w-auto me-3" id="categoryFilter">
+          <option value="">Tất cả danh mục</option>
+          <option value="Điện thoại">Điện thoại</option>
+          <option value="Laptop">Laptop</option>
+          <option value="Phụ kiện">Phụ kiện</option>
+          <option value="Âm thanh">Âm thanh</option>
+          <option value="Tablet">Tablet</option>
+          <option value="Smartwatch">Smartwatch</option>
+          <option value="Gaming">Gaming</option>
+        </select>
+        <a href="admin.html" class="btn btn-light">Quản trị</a>
       </div>
     </nav>
-    <section class="hero-section text-center text-white">
-      <div class="overlay"></div>
-      <div class="hero-content">
-        <h1 class="display-4 fw-bold">Welcome to GadgetStore</h1>
-        <p class="lead">Compare the best gadgets easily</p>
+
+    <div class="container mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Sản phẩm nổi bật</h2>
+        <button class="btn btn-outline-primary" id="btnCompare">
+          So sánh (<span id="compareCount">0</span>/2)
+        </button>
       </div>
-    </section>
-    <div class="container py-5">
-      <div id="loading" class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
-      </div>
-      <div class="row g-4" id="productList"></div>
+
+      <div class="row" id="productList"></div>
     </div>
-    <!-- MODAL -->
-    <div class="modal fade" id="productModal">
+
+    <!-- Modal Chi tiết sản phẩm -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Product Detail</h5>
-            <button class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="modalProductName"></h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
           </div>
-          <div class="modal-body" id="modalBody"></div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-5 text-center">
+                <img
+                  id="modalImage"
+                  class="img-fluid rounded shadow-sm"
+                  style="max-height: 300px"
+                />
+              </div>
+              <div class="col-md-7">
+                <h4 id="modalPrice" class="text-primary"></h4>
+                <p id="modalDescription"></p>
+                <div id="modalSpecs" class="mb-4"></div>
+                <h5>Đánh giá từ khách hàng</h5>
+                <div id="reviewList" class="border p-3 rounded"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <!-- TOAST -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-      <div id="mainToast" class="toast">
-        <div class="toast-header">
-          <strong class="me-auto"> GadgetStore </strong>
-          <button class="btn-close" data-bs-dismiss="toast"></button>
+
+    <!-- Modal So sánh -->
+    <div class="modal fade" id="compareModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">So sánh 2 sản phẩm</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="compareTable"></div>
         </div>
-        <div class="toast-body" id="toastText"></div>
       </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./api.js"></script>
-    <script src="./utils.js"></script>
-    <script src="./main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>
